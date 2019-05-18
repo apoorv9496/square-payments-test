@@ -14,21 +14,28 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 let oauth2 = defaultClient.authentications['oauth2'];
-oauth2.accessToken = process.env.ACCESS_TOKEN;
+oauth2.accessToken = "EAAAEOkeUVXPfFhK7SjciwEmBiiVt-HKG1pX3dhphfZtYE2xwlUJORb6a6p17nx8"; //process.env.ACCESS_TOKEN;
 
 const transactionsApi = new TransactionsApi();
 const ordersApi = new OrdersApi();
 const locationsApi = new LocationsApi();
 
-app.post('/pay',  (request, response) => {
+app.post('/pay', async (request, response) => {
   const requestBody = request.body;
-  const locations = locationsApi.listLocations();
+  const locations = await locationsApi.listLocations();
+
+  //console.log(locations);
   const locationId = locations.locations[0].id;
 
   const createOrderRequest = {
     idempotency_key: crypto.randomBytes(12).toString('hex'),
     order: {
-      line_items: [
+      line_items: requestBody.order_items
+    }
+  }
+  //console.log("order object: ");
+  //console.log(createOrderRequest);
+  /*[
         {
           name: "Cafe App Test Transaction",
           quantity: "1",
@@ -37,30 +44,30 @@ app.post('/pay',  (request, response) => {
             currency: "USD"
           }
         }
-      ]
-    }
-  }
+      ]*/
 
-  const order =  ordersApi.createOrder(locationId, createOrderRequest);
+  const order = await ordersApi.createOrder(locationId, createOrderRequest);
 
   try {
     const chargeBody = {
       "idempotency_key": crypto.randomBytes(12).toString('hex'),
       "card_nonce": requestBody.nonce,
       "amount_money": {
-        "amount": "1",
-        "currency": "USD"
+        "amount": order.order.total_money.amount,
+        "currency": order.order.total_money.currency
       },
-      "order_id": order.order.id
+      "order_id": order.order.id,
+      "shipping_address" : requestBody.shipping_address
     };
-    const transaction = transactionsApi.charge(locationId, chargeBody);
-    console.log(transaction.transaction);
+    const transaction = await transactionsApi.charge(locationId, chargeBody);
+    //console.log("transaction object: ");
+    //console.log(transaction.transaction);
 
     response.status(200).json(transaction.transaction);
   } catch (e) {
     delete e.response.req.headers;
     delete e.response.req._headers;
-    console.log(`[Error] Status:${e.status}, Messages: ${JSON.stringify((JSON.parse(e.response.text)).errors, null, 2)}`);
+    //console.log(`[Error] Status:${e.status}, Messages: ${JSON.stringify((JSON.parse(e.response.text)).errors, null, 2)}`);
 
     const { errors } = (JSON.parse(e.response.text));
 
@@ -105,6 +112,6 @@ app.post('/pay',  (request, response) => {
 });
 
 // listen for requests :)
-const listener = app.listen(process.env.PORT, function() {
+const listener = app.listen(5123, function() { //process.env.PORT
   console.log('Your app is listening on port ' + listener.address().port);
 });
