@@ -20,9 +20,9 @@ const transactionsApi = new TransactionsApi();
 const ordersApi = new OrdersApi();
 const locationsApi = new LocationsApi();
 
-app.post('/chargeForCookie', async (request, response) => {
+app.post('/pay',  (request, response) => {
   const requestBody = request.body;
-  const locations = await locationsApi.listLocations();
+  const locations = locationsApi.listLocations();
   const locationId = locations.locations[0].id;
 
   const createOrderRequest = {
@@ -30,10 +30,10 @@ app.post('/chargeForCookie', async (request, response) => {
     order: {
       line_items: [
         {
-          name: "Cookie 🍪",
+          name: "Cafe App Test Transaction",
           quantity: "1",
           base_price_money: {
-            amount: 100,
+            amount: 1,
             currency: "USD"
           }
         }
@@ -41,26 +41,26 @@ app.post('/chargeForCookie', async (request, response) => {
     }
   }
 
-  const order = await ordersApi.createOrder(locationId, createOrderRequest);
+  const order =  ordersApi.createOrder(locationId, createOrderRequest);
 
   try {
     const chargeBody = {
       "idempotency_key": crypto.randomBytes(12).toString('hex'),
       "card_nonce": requestBody.nonce,
       "amount_money": {
-        ...order.order.total_money,
+        "amount": "1",
+        "currency": "USD"
       },
       "order_id": order.order.id
     };
-    const transaction = await transactionsApi.charge(locationId, chargeBody);
+    const transaction = transactionsApi.charge(locationId, chargeBody);
     console.log(transaction.transaction);
 
     response.status(200).json(transaction.transaction);
   } catch (e) {
     delete e.response.req.headers;
     delete e.response.req._headers;
-    console.log(
-      `[Error] Status:${e.status}, Messages: ${JSON.stringify((JSON.parse(e.response.text)).errors, null, 2)}`);
+    console.log(`[Error] Status:${e.status}, Messages: ${JSON.stringify((JSON.parse(e.response.text)).errors, null, 2)}`);
 
     const { errors } = (JSON.parse(e.response.text));
 
