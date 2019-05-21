@@ -14,7 +14,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 let oauth2 = defaultClient.authentications['oauth2'];
-oauth2.accessToken = "EAAAEOkeUVXPfFhK7SjciwEmBiiVt-HKG1pX3dhphfZtYE2xwlUJORb6a6p17nx8"; //process.env.ACCESS_TOKEN;
+oauth2.accessToken = process.env.ACCESS_TOKEN;
 
 const transactionsApi = new TransactionsApi();
 const ordersApi = new OrdersApi();
