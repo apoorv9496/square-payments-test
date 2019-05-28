@@ -14,7 +14,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 let oauth2 = defaultClient.authentications['oauth2'];
-oauth2.accessToken = process.env.ACCESS_TOKEN;
+oauth2.accessToken = "EAAAEBHDxWiUg2JIw4kZo43B6MyU7s0Fvz-tzPLXydXCTxAypzlgLGM5kYeEsrLm"; //process.env.ACCESS_TOKEN;
 
 const transactionsApi = new TransactionsApi();
 const ordersApi = new OrdersApi();
@@ -24,7 +24,8 @@ app.post('/pay', async (request, response) => {
   const requestBody = request.body;
   const locations = await locationsApi.listLocations();
 
-  //console.log(locations);
+  console.log(requestBody);
+  console.log(requestBody.order_items);
   const locationId = locations.locations[0].id;
 
   const createOrderRequest = {
@@ -33,8 +34,8 @@ app.post('/pay', async (request, response) => {
       line_items: requestBody.order_items
     }
   }
-  //console.log("order object: ");
-  //console.log(createOrderRequest);
+  console.log("order object: ");
+  console.log(createOrderRequest);
   /*[
         {
           name: "Cafe App Test Transaction",
@@ -112,6 +113,6 @@ app.post('/pay', async (request, response) => {
 });
 
 // listen for requests :)
-const listener = app.listen(process.env.PORT, function() { //process.env.PORT
+const listener = app.listen(5123, function() { //process.env.PORT
   console.log('Your app is listening on port ' + listener.address().port);
 });
